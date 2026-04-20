@@ -1,31 +1,22 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Translation Studio</title>
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #ffffff;
       --surface: #f6f8fa;
-      --surface2: #0969da;
       --border: #d0d7de;
       --text: #24292f;
       --text-muted: #6e7781;
       --accent: #0969da;
-      --accent-hover: #0550ae;
       --highlight: rgba(9, 105, 218, 0.1);
       --highlight-active: rgba(9, 105, 218, 0.2);
-      --radius: 8px;
+      --radius: 6px;
     }
 
     body {
@@ -34,48 +25,44 @@
       color: var(--text);
       height: 100vh;
       display: flex;
-      flex-direction: column;
       overflow: hidden;
     }
 
-    header {
-      padding: 12px 20px;
-      background: var(--surface);
+    /* ── Left: source ── */
+    .pane-source {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+    }
+
+    /* ── Right: translation + dict ── */
+    .pane-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .translation-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.5px;
-    }
-
-
-    .main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      gap: 0;
-    }
-
-    .pane {
-      flex: 1;
+    .dict-section {
+      flex: 2;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-    }
-
-    .pane+.pane {
-      border-left: 1px solid var(--border);
+      background: var(--surface);
     }
 
     .pane-label {
-      padding: 6px 16px;
+      padding: 5px 14px;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -83,253 +70,101 @@
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* source pane body: relative container so textarea/rendered overlay exactly */
-    .source-body {
-      position: relative;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    #source-input,
-    #source-rendered {
-      position: absolute;
-      inset: 0;
-      overflow-y: auto;
-      padding: 16px;
-      font-size: 15px;
-      line-height: 1.9;
-      color: var(--text);
-      font-family: inherit;
     }
 
     #source-input {
+      flex: 1;
       background: transparent;
       border: none;
       outline: none;
       resize: none;
+      padding: 14px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+      font-family: inherit;
     }
 
-    #source-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    #source-rendered {
-      cursor: text;
-      outline: none;
-    }
+    #source-input::placeholder { color: var(--text-muted); }
 
     #translation-output {
       flex: 1;
-      padding: 16px;
+      padding: 14px;
       font-size: 15px;
       line-height: 1.9;
       overflow-y: auto;
-      cursor: default;
       color: var(--text-muted);
     }
 
-    #translation-output.has-content {
-      color: var(--text);
-    }
+    #translation-output.has-content { color: var(--text); }
 
     .word {
       cursor: pointer;
       border-radius: 3px;
       padding: 1px 2px;
-      transition: background 0.15s;
+      transition: background 0.1s;
     }
 
-    .word:hover {
-      background: var(--highlight);
-      color: var(--accent);
-    }
+    .word:hover { background: var(--highlight); color: var(--accent); }
+    .word.active { background: var(--highlight-active); color: var(--accent); font-weight: 600; }
 
-    .word.active {
-      background: var(--highlight-active);
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    button {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 7px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    button:hover {
-      background: var(--surface);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
-    #btn-translate {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-      font-weight: 600;
-    }
-
-    #btn-translate:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
-      color: #fff;
-    }
-
-    .shortcut-hint {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .kbd {
-      display: inline-block;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1px 5px;
-      font-size: 11px;
-    }
-
-    .dict-panel {
-      flex-shrink: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      max-height: 260px;
+    /* ── Dict panel ── */
+    #dict-panel {
+      flex: 1;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .dict-panel-inner {
-      padding: 14px 18px;
+      padding: 14px 16px;
     }
 
     .dict-empty {
       color: var(--text-muted);
       font-size: 13px;
-      padding: 14px 18px;
-      text-align: center;
+      margin-top: 8px;
     }
 
-    .dict-word-header {
+    .dict-entry { margin-bottom: 14px; }
+
+    .dict-head {
       display: flex;
       align-items: baseline;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .dict-word {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .dict-phonetic {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    .dict-pos-block {
-      margin-bottom: 10px;
-    }
-
-    .dict-pos {
-      display: inline-block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #fff;
-      background: var(--accent);
-      border-radius: 4px;
-      padding: 2px 8px;
+      gap: 10px;
       margin-bottom: 6px;
     }
 
-    .dict-def-list {
-      list-style: none;
+    .dict-word { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .dict-pron { font-size: 13px; color: var(--text-muted); }
+    .dict-pos  {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+      color: #fff; background: var(--accent);
+      border-radius: 3px; padding: 1px 6px;
     }
 
-    .dict-def-list li {
-      font-size: 13px;
-      color: var(--text);
-      padding: 3px 0 3px 14px;
-      position: relative;
-      line-height: 1.6;
+    .dict-means { list-style: none; counter-reset: item; }
+    .dict-means li {
+      font-size: 14px; color: var(--text);
+      padding: 2px 0 2px 18px;
+      position: relative; line-height: 1.6;
+    }
+    .dict-means li::before {
+      content: counter(item) "."; counter-increment: item;
+      position: absolute; left: 0;
+      color: var(--text-muted); font-size: 11px;
     }
 
-    .dict-def-list li::before {
-      content: counter(item) ".";
-      counter-increment: item;
-      position: absolute;
-      left: 0;
-      color: var(--text-muted);
-      font-size: 11px;
-    }
-
-    .dict-def-list {
-      counter-reset: item;
-    }
-
-    .dict-example {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-style: italic;
-      padding-left: 14px;
-      margin-top: 2px;
-    }
-
-    .dict-footer {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 8px 18px 12px;
-      border-top: 1px solid var(--border);
-      margin-top: 4px;
-    }
-
-    #naver-btn {
+    .dict-naver-link {
+      display: inline-block;
+      margin-top: 10px;
       font-size: 12px;
       color: var(--accent);
       text-decoration: none;
-      padding: 4px 10px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      transition: background 0.15s;
+      padding: 3px 10px;
     }
-
-    #naver-btn:hover {
-      background: var(--highlight);
-    }
+    .dict-naver-link:hover { background: var(--highlight); }
 
     .loading-spinner {
       display: inline-block;
-      width: 14px;
-      height: 14px;
+      width: 13px; height: 13px;
       border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
@@ -338,213 +173,148 @@
       vertical-align: middle;
     }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .error-msg {
-      color: #ef5350;
-      font-size: 13px;
-      padding: 10px 0;
-    }
+    .error-msg { color: #cf222e; font-size: 13px; }
   </style>
 </head>
-
 <body>
 
-  <header>
-    <h1>Translation Studio</h1>
-  </header>
+<div class="pane-source">
+  <div class="pane-label">원문 (English)</div>
+  <textarea id="source-input" autofocus
+    placeholder="번역할 영어 텍스트를 붙여넣으세요.&#10;&#10;Enter → 번역 / Shift+Enter → 줄바꿈&#10;더블클릭 → 단어 사전 검색"></textarea>
+</div>
 
-  <div class="main">
-    <div class="pane">
-      <div class="pane-label">원문 (English)</div>
-      <div class="source-body">
-        <textarea id="source-input" autofocus
-          placeholder="번역할 영어 텍스트를 붙여넣으세요...&#10;&#10;Enter 로 번역 실행 / Shift+Enter 줄바꿈"></textarea>
-        <div id="source-rendered" tabindex="0" style="display:none;"></div>
-      </div>
-    </div>
-    <div class="pane">
-      <div class="pane-label">번역 결과</div>
-      <div id="translation-output"><span style="color:var(--text-muted);font-size:13px;">번역 결과가 여기에 표시됩니다. 단어를 클릭하면 사전이
-          열립니다.</span></div>
+<div class="pane-right">
+  <div class="translation-section">
+    <div class="pane-label">번역 결과 (더블클릭 → 사전)</div>
+    <div id="translation-output">
+      <span style="color:var(--text-muted);font-size:13px;">번역 결과가 여기에 표시됩니다.</span>
     </div>
   </div>
-
-  <div class="toolbar">
-    <button id="btn-translate">번역하기</button>
-    <button id="btn-copy">복사</button>
-    <span class="shortcut-hint"><span class="kbd">Enter</span> 번역 &nbsp; <span class="kbd">Shift</span>+<span
-        class="kbd">Enter</span> 줄바꿈</span>
+  <div class="dict-section">
+    <div class="pane-label">사전</div>
+    <div id="dict-panel">
+      <p class="dict-empty">단어를 더블클릭하면 뜻이 표시됩니다.</p>
+    </div>
   </div>
+</div>
 
-  <div class="dict-panel" id="dict-panel">
-    <div class="dict-empty">단어를 클릭하면 사전 결과가 표시됩니다.</div>
-  </div>
+<script>
+  const sourceInput       = document.getElementById('source-input');
+  const translationOutput = document.getElementById('translation-output');
+  const dictPanel         = document.getElementById('dict-panel');
 
-  <script>
-    const sourceInput = document.getElementById('source-input');
-    const sourceRendered = document.getElementById('source-rendered');
-    const translationOutput = document.getElementById('translation-output');
-    const dictPanel = document.getElementById('dict-panel');
-    const btnTranslate = document.getElementById('btn-translate');
-    const btnCopy = document.getElementById('btn-copy');
+  // ── Translate ────────────────────────────────────────────────
 
-    function enterViewMode(sourceText) {
-      sourceRendered.innerHTML = renderWords(sourceText);
-      sourceRendered.querySelectorAll('.word').forEach(el => {
-        el.addEventListener('click', (e) => {
-          lookupWord(el, e);
-          setTimeout(() => sourceInput.focus(), 0); // ← 클릭 처리 끝나고 포커스 복귀
-        });
+  async function translate() {
+    const text = sourceInput.value.trim();
+    if (!text) return;
+
+    translationOutput.innerHTML = '<span class="loading-spinner"></span> 번역 중...';
+    translationOutput.classList.remove('has-content');
+
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: [text], target_lang: 'KO' }),
       });
-      sourceInput.style.display = 'none';
-      sourceRendered.style.display = 'block';
-      sourceRendered.focus();
+      if (!res.ok) throw new Error(`DeepL 오류 (${res.status})`);
+      const data = await res.json();
+      renderTranslation(data.translations[0].text);
+    } catch (e) {
+      translationOutput.innerHTML = `<span class="error-msg">${e.message}</span>`;
     }
 
-    function enterEditMode() {
-      sourceInput.style.display = '';
-      sourceRendered.style.display = 'none';
-      sourceInput.focus();
-      // 커서를 텍스트 끝으로
-      sourceInput.selectionStart = sourceInput.selectionEnd = sourceInput.value.length;
-    }
+    sourceInput.focus();
+  }
 
-    // 원문 렌더링 영역 클릭 시 편집 모드 (단어 클릭은 stopPropagation으로 차단)
-    sourceRendered.addEventListener('click', enterEditMode);
+  function renderTranslation(text) {
+    translationOutput.classList.add('has-content');
+    const html = text.split(/(\s+)/).map(tok => {
+      if (/^\s+$/.test(tok)) return tok.replace(/\n/g, '<br>');
+      if (!tok) return '';
+      const safe = tok.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return `<span class="word" data-word="${safe}">${tok}</span>`;
+    }).join('');
+    translationOutput.innerHTML = html;
+  }
 
-    // ── Translation ──────────────────────────────────────────────
+  // ── Dict lookup ──────────────────────────────────────────────
 
-    async function translate() {
-      const text = sourceInput.value.trim();
-      if (!text) return;
+  async function lookupWord(raw) {
+    const clean = raw.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    if (!clean) return;
 
-      translationOutput.innerHTML = '<span class="loading-spinner"></span> 번역 중...';
-      translationOutput.classList.remove('has-content');
+    document.querySelectorAll('.word').forEach(w => w.classList.remove('active'));
+    dictPanel.innerHTML = `<p class="dict-empty"><span class="loading-spinner"></span>"${clean}" 검색 중...</p>`;
 
-      try {
-        const res = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: [text], target_lang: 'KO' }),
-        });
-
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(`DeepL API 오류 (${res.status}): ${err}`);
-        }
-
-        const data = await res.json();
-        const translated = data.translations[0].text;
-        enterViewMode(text);
-        translationOutput.classList.add('has-content');
-        translationOutput.innerHTML = renderWords(translated);
-        translationOutput.querySelectorAll('.word').forEach(el => {
-          el.addEventListener('click', () => lookupWord(el));
-        });
-      } catch (e) {
-        translationOutput.innerHTML = `<span class="error-msg">${e.message}</span>`;
-      }
-    }
-
-    function renderWords(text) {
-      const tokens = text.split(/(\s+)/);
-      return tokens.map(token => {
-        if (/^\s+$/.test(token)) return token.replace(/\n/g, '<br>');
-        if (!token) return '';
-        const safe = token.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        return `<span class="word" data-word="${safe}">${token}</span>`;
-      }).join('');
-    }
-
-    // ── Dictionary ───────────────────────────────────────────────
-
-    async function lookupWord(el) {
-      document.querySelectorAll('.word').forEach(w => w.classList.remove('active'));
-      el.classList.add('active');
-
-      const raw = el.dataset.word || el.textContent;
-      const clean = raw.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      if (!clean) return;
-
-      sourceInput.focus()
-
-      dictPanel.innerHTML = `<div class="dict-empty"><span class="loading-spinner"></span> "${clean}" 검색 중...</div>`;
-
-      try {
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${clean}`);
-        if (!res.ok) throw new Error('not_found');
-        const data = await res.json();
-        renderDictPanel(data[0], clean);
-      } catch (err) {
+    try {
+      const res = await fetch(`/api/dict?query=${encodeURIComponent(clean)}`);
+      if (res.status === 404) {
         dictPanel.innerHTML = `
-        <div class="dict-empty">
-          "<strong>${clean}</strong>"을(를) 사전에서 찾을 수 없습니다.<br>
-          <br>
-          <a id="naver-btn" href="https://dict.naver.com/search.nhn?query=${encodeURIComponent(clean)}" target="_blank" rel="noopener">
+          <p class="dict-empty">"<strong>${clean}</strong>" 결과 없음</p>
+          <a class="dict-naver-link" href="https://dict.naver.com/search.nhn?query=${encodeURIComponent(clean)}" target="_blank" rel="noopener">
             네이버 사전에서 보기 →
-          </a>
-        </div>`;
+          </a>`;
+        return;
       }
+      if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
+      const data = await res.json();
+      renderDict(data);
+    } catch (e) {
+      dictPanel.innerHTML = `<p class="error-msg">${e.message}</p>`;
     }
 
-    function renderDictPanel(entry, fallbackWord) {
-      const word = entry.word || fallbackWord;
-      const phonetic = entry.phonetic || (entry.phonetics || []).find(p => p.text)?.text || '';
+    sourceInput.focus();
+  }
 
-      let html = '<div class="dict-panel-inner">';
-      html += `<div class="dict-word-header">
-      <span class="dict-word">${word}</span>
-      ${phonetic ? `<span class="dict-phonetic">${phonetic}</span>` : ''}
-    </div>`;
-
-      (entry.meanings || []).forEach(meaning => {
-        html += `<div class="dict-pos-block">
-        <span class="dict-pos">${meaning.partOfSpeech}</span>
-        <ol class="dict-def-list">`;
-        (meaning.definitions || []).slice(0, 3).forEach(def => {
-          html += `<li>${def.definition}`;
-          if (def.example) html += `<div class="dict-example">"${def.example}"</div>`;
-          html += `</li>`;
-        });
-        html += `</ol></div>`;
-      });
-
-      html += '</div>';
-      html += `<div class="dict-footer">
-      <a id="naver-btn" href="https://dict.naver.com/search.nhn?query=${encodeURIComponent(word)}" target="_blank" rel="noopener">
-        네이버 사전에서 보기 →
-      </a>
-    </div>`;
-
-      dictPanel.innerHTML = html;
+  function renderDict(data) {
+    let html = '';
+    for (const entry of data.entries) {
+      html += `<div class="dict-entry">
+        <div class="dict-head">
+          <span class="dict-word">${entry.word}</span>
+          ${entry.pron ? `<span class="dict-pron">${entry.pron}</span>` : ''}
+          ${entry.pos  ? `<span class="dict-pos">${entry.pos}</span>`   : ''}
+        </div>
+        <ul class="dict-means">
+          ${entry.means.map(m => `<li>${m}</li>`).join('')}
+        </ul>
+      </div>`;
     }
+    html += `<a class="dict-naver-link"
+      href="https://dict.naver.com/search.nhn?query=${encodeURIComponent(data.query)}"
+      target="_blank" rel="noopener">네이버 사전에서 더 보기 →</a>`;
+    dictPanel.innerHTML = html;
+  }
 
-    // ── Controls ─────────────────────────────────────────────────
+  // ── Double-click triggers ────────────────────────────────────
 
-    btnTranslate.addEventListener('click', translate);
+  translationOutput.addEventListener('dblclick', (e) => {
+    const span = e.target.closest('.word');
+    if (!span) return;
+    span.classList.add('active');
+    lookupWord(span.dataset.word || span.textContent);
+  });
 
-    btnCopy.addEventListener('click', () => {
-      const text = translationOutput.innerText;
-      if (!text || text.includes('번역 결과가 여기에')) return;
-      navigator.clipboard.writeText(text).then(() => {
-        const orig = btnCopy.textContent;
-        btnCopy.textContent = '복사됨 ✓';
-        setTimeout(() => { btnCopy.textContent = orig; }, 1500);
-      });
-    });
+  sourceInput.addEventListener('dblclick', () => {
+    setTimeout(() => {
+      const word = sourceInput.value.slice(sourceInput.selectionStart, sourceInput.selectionEnd).trim();
+      if (word) lookupWord(word);
+    }, 0);
+  });
 
-    sourceInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        translate();
-      }
-    });
-  </script>
+  // ── Keyboard ─────────────────────────────────────────────────
+
+  sourceInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      translate();
+    }
+  });
+</script>
 </body>
-
 </html>
