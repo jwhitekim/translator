@@ -293,6 +293,8 @@
 
   // ── Double-click triggers ────────────────────────────────────
 
+  translationOutput.addEventListener('mousedown', (e) => { e.preventDefault(); });
+
   translationOutput.addEventListener('dblclick', (e) => {
     const span = e.target.closest('.word');
     if (!span) return;
