@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:PATH -split \";\" | ForEach-Object { $_ })",
+      "Bash(/c/Users/prml-s-j.hong/anaconda3/envs/trans/python.exe -m pip install beautifulsoup4 -q)",
+      "Bash(/c/Users/prml-s-j.hong/anaconda3/envs/trans/python.exe -c \"from bs4 import BeautifulSoup; print\\('OK'\\)\")"
+    ]
+  }
+}
